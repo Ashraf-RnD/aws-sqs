@@ -1,0 +1,1 @@
+aws sqs --endpoint http://localhost:4576 --region ap-southeast-1 create-queue --queue-name eventQueue
