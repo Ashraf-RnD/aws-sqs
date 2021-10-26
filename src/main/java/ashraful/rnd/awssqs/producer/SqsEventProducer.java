@@ -6,11 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import javax.annotation.PostConstruct;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -41,7 +43,7 @@ public class SqsEventProducer {
         return "";
     }
 
-    public void publishEvent(EventDto eventDto){
+    public Mono<String> publishEvent(EventDto eventDto) {
 
         var messageBody = mapperUtil.objectToJson(eventDto);
 
@@ -52,9 +54,11 @@ public class SqsEventProducer {
 
         var future = sqsAsyncClient.sendMessage(sendMessageRequest);
 
-        future.thenAccept(sendMessageResponse -> {
-            log.info("SqsEventProducer:: publishEvent:: publishResponse: {}",sendMessageResponse.toString());
-        });
+        return Mono.fromFuture(future.thenApply(sendMessageResponse -> {
+//            log.info("SqsEventProducer:: publishEvent:: publishResponse: {}", sendMessageResponse.toString());
+            return sendMessageResponse.messageId();
+        }));
+
     }
 
 }
